@@ -1,37 +1,32 @@
 <template>
   <div class="category-page">
-    <van-nav-bar title="品牌选车" fixed placeholder />
+    <van-nav-bar title="品牌选车" fixed placeholder :border="false" class="nav-bar" />
 
-    <van-index-bar :index-list="indexList" sticky-offset-top="46" highlight-color="#ee0a24">
+    <van-index-bar 
+      :index-list="indexList" 
+      :sticky-offset-top="46" 
+      highlight-color="#ee0a24"
+    >
       <div v-for="group in brandGroups" :key="group.initial">
-        <van-index-anchor :index="group.initial" class="custom-anchor" />
+        <van-index-anchor :index="group.initial" class="anchor-title" />
         
-        <van-cell 
+        <div 
           v-for="brand in group.list" 
           :key="brand.id" 
-          :title="brand.name"
-          is-link
-          center
-          size="large"
-          class="brand-card"
+          class="brand-row"
           @click="onBrandClick(brand)"
         >
-          <template #icon>
-            <div class="logo-wrapper">
-              <van-image
-                width="45"
-                height="45"
-                fit="contain"
-                :src="brand.logo"
-                lazy-load
-              />
-            </div>
-          </template>
-        </van-cell>
+          <van-image
+            class="brand-logo"
+            fit="contain"
+            :src="brand.logo"
+          />
+          <div class="brand-name van-hairline--bottom">{{ brand.name }}</div>
+        </div>
       </div>
     </van-index-bar>
 
-    <div class="footer-space"></div>
+    <div style="height: 60px;"></div>
   </div>
 </template>
 
@@ -41,7 +36,6 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// 品牌数据列表
 const indexList = ref(['A', 'B', 'F', 'T'])
 const brandGroups = ref([
   {
@@ -76,52 +70,77 @@ const onBrandClick = (brand) => {
 
 <style scoped>
 .category-page {
-  background-color: #f7f8fa;
+  background-color: #fff;
+  width: 100%;
   min-height: 100vh;
 }
 
-/* 锚点样式：吸顶效果更明显 */
-.custom-anchor {
+.nav-bar {
+  background-color: #fff;
+}
+.nav-bar::after {
+  border-bottom: 1px solid #f2f3f5;
+}
+
+/* 锚点字母栏：浅灰色底，占满全宽 */
+.anchor-title {
   background-color: #f7f8fa;
-  color: #969799;
+  color: #323233;
+  font-weight: 600;
   font-size: 14px;
   line-height: 32px;
+  padding-left: 16px;
+  width: 100%;
 }
 
-/* 品牌卡片：撑满宽度，增加高度 */
-.brand-card {
-  padding: 16px;
-  margin-bottom: 1px; /* 细微线条分隔 */
+:deep(.van-index-anchor--sticky) {
+  background-color: rgba(247, 248, 250, 0.9) !important;
+  backdrop-filter: blur(8px);
 }
 
-.logo-wrapper {
-  width: 45px;
-  height: 45px;
-  background: #fff;
-  border-radius: 8px;
+/* 品牌行：Flex 布局，真正撑满左右边界 */
+.brand-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  padding-left: 16px; /* 左侧留白 */
+  background-color: #fff;
+}
+
+.brand-row:active {
+  background-color: #f2f3f5;
+}
+
+/* Logo 固定大小 */
+.brand-logo {
+  width: 40px;
+  height: 40px;
   margin-right: 16px;
-  /* 增加轻微投影，让 Logo 更有立体感 */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  flex-shrink: 0;
 }
 
-/* 调整右侧索引字符间距，防止点击太挤 */
-:deep(.van-index-bar__index) {
-  padding: 4px 8px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.footer-space {
-  height: 60px;
-}
-
-/* 品牌文字样式 */
-:deep(.van-cell__title) {
+/* 品牌名字占据剩余全宽，底部带极细分割线 */
+.brand-name {
+  flex: 1;
   font-size: 16px;
-  font-weight: 500;
   color: #323233;
+  padding: 16px 0; /* 控制行高 */
+  /* 让分割线不穿透到 Logo 下方 */
+}
+
+/* Vant 内置的极细下边框类 van-hairline--bottom 需要配合 position */
+.van-hairline--bottom::after {
+  border-bottom-color: #ebedf0;
+}
+
+/* 索引侧边栏，微调防止和右侧内容重叠 */
+:deep(.van-index-bar__sidebar) {
+  right: 0;
+  padding: 10px 4px;
+}
+:deep(.van-index-bar__index) {
+  padding: 2px 6px;
+  line-height: 16px;
+  font-size: 11px;
 }
 </style>
