@@ -5,6 +5,8 @@ import request from '../utils/request'
 export const login = (data) => request.post('/user/login', data)
 // 获取当前登录用户信息
 export const getUserInfo = () => request.get('/user/info')
+// 更新个人资料接口
+export const updateUserInfo = (data) => request.post('/user/update', data)
 
 // --- 车型相关接口 ---
 // 分页搜索车型列表
