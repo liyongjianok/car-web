@@ -1,146 +1,194 @@
 <template>
   <div class="category-page">
-    <van-nav-bar title="品牌选车" fixed placeholder :border="false" class="nav-bar" />
-
-    <van-index-bar 
-      :index-list="indexList" 
-      :sticky-offset-top="46" 
-      highlight-color="#ee0a24"
-    >
-      <div v-for="group in brandGroups" :key="group.initial">
-        <van-index-anchor :index="group.initial" class="anchor-title" />
-        
-        <div 
-          v-for="brand in group.list" 
-          :key="brand.id" 
-          class="brand-row"
-          @click="onBrandClick(brand)"
-        >
-          <van-image
-            class="brand-logo"
-            fit="contain"
-            :src="brand.logo"
+    <van-nav-bar title="选车" fixed placeholder :border="false" />
+    
+    <div class="main-content">
+      <div class="sidebar-wrapper">
+        <van-sidebar v-model="activeBrandIndex" @change="onChangeBrand">
+          <van-sidebar-item 
+            v-for="brand in brandList" 
+            :key="brand.id" 
+            :title="brand.name" 
           />
-          <div class="brand-name van-hairline--bottom">{{ brand.name }}</div>
-        </div>
+        </van-sidebar>
       </div>
-    </van-index-bar>
 
-    <div style="height: 60px;"></div>
+      <div class="car-list-wrapper">
+        <van-empty v-if="carList.length === 0 && !loading" description="该品牌下暂无车型" />
+        
+        <van-list
+          v-model:loading="loading"
+          :finished="finished"
+          finished-text="没有更多了"
+          @load="onLoadCars"
+        >
+          <div 
+            class="car-card" 
+            v-for="car in carList" 
+            :key="car.id" 
+            @click="$router.push(`/detail/${car.id}`)"
+          >
+            <van-image width="100%" height="110" fit="cover" radius="6" :src="car.coverImg" />
+            <div class="car-info">
+              <div class="car-name van-multi-ellipsis--l2">
+                {{ car.brandName }} {{ car.series }} {{ car.modelName }}
+              </div>
+              <div class="car-price">{{ car.price }} 万起</div>
+            </div>
+          </div>
+        </van-list>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { getCarBrands, getCarList } from '../api/car'
 
-const router = useRouter()
+// 品牌相关状态
+const brandList = ref([])
+const activeBrandIndex = ref(0)
+const currentBrandId = ref(null)
 
-const indexList = ref(['A', 'B', 'F', 'T'])
-const brandGroups = ref([
-  {
-    initial: 'A',
-    list: [{ id: 4, name: '奥迪', logo: 'https://dummyimage.com/100/7f8c8d/fff&text=Audi' }]
-  },
-  {
-    initial: 'B',
-    list: [
-      { id: 3, name: '宝马', logo: 'https://dummyimage.com/100/2980b9/fff&text=BMW' },
-      { id: 1, name: '本田', logo: 'https://dummyimage.com/100/c0392b/fff&text=Honda' },
-      { id: 5, name: '比亚迪', logo: 'https://dummyimage.com/100/d35400/fff&text=BYD' }
-    ]
-  },
-  {
-    initial: 'F',
-    list: [{ id: 2, name: '丰田', logo: 'https://dummyimage.com/100/bdc3c7/000&text=Toyota' }]
-  },
-  {
-    initial: 'T',
-    list: [{ id: 6, name: '特斯拉', logo: 'https://dummyimage.com/100/c0392b/fff&text=Tesla' }]
+// 车型列表相关状态
+const carList = ref([])
+const loading = ref(false)
+const finished = ref(false)
+const pageIndex = ref(1)
+
+// 1. 初始化拉取品牌列表
+const initBrands = async () => {
+  try {
+    const res = await getCarBrands()
+    brandList.value = res.list || []
+    
+    // 默认选中第一个品牌，并加载其对应的车型
+    if (brandList.value.length > 0) {
+      currentBrandId.value = brandList.value[0].id
+      onLoadCars()
+    } else {
+      finished.value = true
+    }
+  } catch (err) {
+    finished.value = true
   }
-])
-
-const onBrandClick = (brand) => {
-  router.push({
-    path: '/home',
-    query: { brandId: brand.id, brandName: brand.name }
-  })
 }
+
+// 2. 左侧侧边栏切换品牌时触发
+const onChangeBrand = (index) => {
+  const selectedBrand = brandList.value[index]
+  if (!selectedBrand) return
+
+  currentBrandId.value = selectedBrand.id
+  // 重置右侧列表状态，重新拉取新品牌的数据
+  carList.value = []
+  pageIndex.value = 1
+  finished.value = false
+  loading.value = true
+  
+  onLoadCars()
+}
+
+// 3. 右侧列表分页加载 (根据当前选中的 BrandId 查询)
+const onLoadCars = async () => {
+  if (!currentBrandId.value) return
+
+  try {
+    const res = await getCarList({
+      brandId: currentBrandId.value, // 【重点】带上动态的 brandId 传给后端
+      pageIndex: pageIndex.value,
+      pageSize: 10
+    })
+
+    carList.value.push(...res.list)
+    loading.value = false
+
+    if (carList.value.length >= res.total || res.list.length === 0) {
+      finished.value = true
+    } else {
+      pageIndex.value++
+    }
+  } catch (err) {
+    loading.value = false
+    finished.value = true
+  }
+}
+
+onMounted(() => {
+  initBrands()
+})
 </script>
 
 <style scoped>
 .category-page {
-  background-color: #fff;
-  width: 100%;
-  min-height: 100vh;
-}
-
-.nav-bar {
-  background-color: #fff;
-}
-.nav-bar::after {
-  border-bottom: 1px solid #f2f3f5;
-}
-
-/* 锚点字母栏：浅灰色底，占满全宽 */
-.anchor-title {
   background-color: #f7f8fa;
-  color: #323233;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 32px;
-  padding-left: 16px;
-  width: 100%;
+  min-height: 100vh;
+  /* 为底部导航栏留出空间 */
+  padding-bottom: 50px; 
 }
 
-:deep(.van-index-anchor--sticky) {
-  background-color: rgba(247, 248, 250, 0.9) !important;
-  backdrop-filter: blur(8px);
-}
-
-/* 品牌行：Flex 布局，真正撑满左右边界 */
-.brand-row {
+.main-content {
   display: flex;
-  align-items: center;
-  width: 100%;
-  padding-left: 16px; /* 左侧留白 */
+  height: calc(100vh - 46px - 50px); /* 减去顶部 NavBar 和底部 TabBar 的高度 */
+}
+
+/* 左侧侧边栏区域 */
+.sidebar-wrapper {
+  width: 85px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #f7f8fa;
+}
+
+/* 覆盖 Vant sidebar 样式，使其更美观 */
+:deep(.van-sidebar-item) {
+  padding: 16px 12px;
+  background-color: #f7f8fa;
+}
+:deep(.van-sidebar-item--select) {
   background-color: #fff;
+  font-weight: bold;
+  color: #ee0a24;
+}
+:deep(.van-sidebar-item--select::before) {
+  background-color: #ee0a24;
 }
 
-.brand-row:active {
-  background-color: #f2f3f5;
-}
-
-/* Logo 固定大小 */
-.brand-logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 16px;
-  flex-shrink: 0;
-}
-
-/* 品牌名字占据剩余全宽，底部带极细分割线 */
-.brand-name {
+/* 右侧列表区域 */
+.car-list-wrapper {
   flex: 1;
-  font-size: 16px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #fff;
+  padding: 12px;
+}
+
+.car-card {
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f2f3f5;
+  padding-bottom: 16px;
+}
+
+.car-card:last-child {
+  border-bottom: none;
+}
+
+.car-info {
+  margin-top: 8px;
+}
+
+.car-name {
+  font-size: 14px;
+  font-weight: 600;
   color: #323233;
-  padding: 16px 0; /* 控制行高 */
-  /* 让分割线不穿透到 Logo 下方 */
+  line-height: 1.4;
 }
 
-/* Vant 内置的极细下边框类 van-hairline--bottom 需要配合 position */
-.van-hairline--bottom::after {
-  border-bottom-color: #ebedf0;
-}
-
-/* 索引侧边栏，微调防止和右侧内容重叠 */
-:deep(.van-index-bar__sidebar) {
-  right: 0;
-  padding: 10px 4px;
-}
-:deep(.van-index-bar__index) {
-  padding: 2px 6px;
-  line-height: 16px;
-  font-size: 11px;
+.car-price {
+  margin-top: 6px;
+  color: #ee0a24;
+  font-size: 15px;
+  font-weight: bold;
 }
 </style>

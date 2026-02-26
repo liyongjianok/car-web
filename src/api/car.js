@@ -18,6 +18,8 @@ export const getMyFavorites = (params) => request.get('/user/favorites', { param
 
 
 // ------------ 车型相关接口 ------------
+// 查询车种
+export const getCarBrands = () => request.get('/cars/brands')
 // 分页搜索车型列表
 export const getCarList = (params) => request.get('/cars/search', { params })
 // 获取车型详情
