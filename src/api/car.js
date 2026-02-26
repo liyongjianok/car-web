@@ -1,6 +1,8 @@
 import request from '../utils/request'
 
 // ------------ 用户相关接口 ------------
+// 注册接口
+export const register = (data) => request.post('/user/register', data)
 // 用户登录
 export const login = (data) => request.post('/user/login', data)
 // 获取当前登录用户信息
