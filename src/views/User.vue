@@ -25,8 +25,7 @@
 
       <van-cell-group inset class="menu-group">
         <van-cell title="我的评论" icon="comment-o" is-link to="/my-reviews" />
-        <van-cell title="我的收藏" icon="star-o" is-link />
-        <van-cell title="浏览历史" icon="clock-o" is-link />
+        <van-cell title="我的收藏" icon="star-o" is-link to="/my-favorites" />
       </van-cell-group>
 
       <div class="logout-btn-box">
@@ -34,21 +33,8 @@
       </div>
     </div>
 
-    <van-popup
-      v-model:show="showEdit"
-      position="right"
-      :style="{ width: '100%', height: '100%', background: '#f7f8fa' }"
-    >
-      <van-nav-bar 
-        title="编辑个人资料" 
-        left-arrow 
-        @click-left="showEdit = false"
-        right-text="保存"
-        @click-right="saveProfile"
-        fixed 
-        placeholder
-      />
-      
+    <van-popup v-model:show="showEdit" position="right" :style="{ width: '100%', height: '100%', background: '#f7f8fa' }">
+      <van-nav-bar title="编辑个人资料" left-arrow @click-left="showEdit = false" right-text="保存" @click-right="saveProfile" fixed placeholder />
       <div class="edit-form">
         <van-cell-group inset>
           <van-cell title="头像" center is-link @click="showAvatarPicker = true">
@@ -56,49 +42,22 @@
               <van-image round width="44" height="44" fit="cover" :src="editData.avatar || defaultAvatar" />
             </template>
           </van-cell>
-          
-          <van-field
-            v-model="editData.nickname"
-            label="用户昵称"
-            placeholder="请输入新昵称"
-            input-align="right"
-            maxlength="12"
-            clearable
-          />
-          
-          <van-field
-            v-model="userInfo.phone"
-            label="手机号码"
-            input-align="right"
-            readonly
-            class="readonly-field"
-          />
+          <van-field v-model="editData.nickname" label="用户昵称" placeholder="请输入新昵称" input-align="right" maxlength="12" clearable />
+          <van-field v-model="userInfo.phone" label="手机号码" input-align="right" readonly class="readonly-field" />
         </van-cell-group>
-        <div class="edit-tips">点击头像可从系统预设图库中进行更换。</div>
       </div>
     </van-popup>
 
-    <van-popup
-      v-model:show="showAvatarPicker"
-      position="bottom"
-      round
-      :style="{ height: 'auto', paddingBottom: '20px' }"
-    >
+    <van-popup v-model:show="showAvatarPicker" position="bottom" round :style="{ height: 'auto', paddingBottom: '20px' }">
       <div class="avatar-picker-header">
         <span class="title">选择系统头像</span>
         <van-icon name="cross" class="close-btn" @click="showAvatarPicker = false" />
       </div>
       <van-grid :column-num="4" :border="false" class="avatar-grid">
-        <van-grid-item 
-          v-for="(img, index) in presetAvatars" 
-          :key="index"
-          @click="selectPresetAvatar(img)"
-        >
+        <van-grid-item v-for="(img, index) in presetAvatars" :key="index" @click="selectPresetAvatar(img)">
           <div :class="['preset-avatar-wrapper', { 'is-active': editData.avatar === img }]">
             <van-image round width="56" height="56" fit="cover" :src="img" />
-            <div class="active-mask" v-if="editData.avatar === img">
-              <van-icon name="success" color="#fff" size="24" />
-            </div>
+            <div class="active-mask" v-if="editData.avatar === img"><van-icon name="success" color="#fff" size="24" /></div>
           </div>
         </van-grid-item>
       </van-grid>
@@ -114,7 +73,6 @@ import { showConfirmDialog, showToast, showSuccessToast } from 'vant'
 const isLogin = ref(!!localStorage.getItem('car_token'))
 const userInfo = ref({})
 const defaultAvatar = 'https://dummyimage.com/100/ccc/fff&text=U'
-
 const showEdit = ref(false)
 const editData = ref({ nickname: '', avatar: '' })
 const showAvatarPicker = ref(false)
@@ -161,17 +119,9 @@ const selectPresetAvatar = (url) => {
 }
 
 const saveProfile = async () => {
-  if (!editData.value.nickname.trim()) {
-    showToast('昵称不能为空')
-    return
-  }
-  
+  if (!editData.value.nickname.trim()) return showToast('昵称不能为空')
   try {
-    await updateUserInfo({
-      nickname: editData.value.nickname,
-      avatar: editData.value.avatar
-    })
-    
+    await updateUserInfo({ nickname: editData.value.nickname, avatar: editData.value.avatar })
     showSuccessToast('资料已更新')
     userInfo.value.nickname = editData.value.nickname
     userInfo.value.avatar = editData.value.avatar
@@ -179,13 +129,10 @@ const saveProfile = async () => {
   } catch (err) {}
 }
 
-onMounted(() => {
-  fetchUserInfo()
-})
+onMounted(() => fetchUserInfo())
 </script>
 
 <style scoped>
-/* 原有基础样式 */
 .user-page { background-color: #f7f8fa; min-height: 100vh; }
 .not-login { text-align: center; padding-top: 80px; }
 .not-login .tips { color: #969799; font-size: 14px; margin: 20px 0 30px; }
@@ -201,37 +148,10 @@ onMounted(() => {
 .logout-btn { color: #ee0a24; border: none; background: #fff; }
 .edit-form { padding-top: 12px; }
 .readonly-field { color: #c8c9cc; }
-.edit-tips { padding: 16px 30px; font-size: 12px; color: #969799; line-height: 1.5; }
-
-/* 预设头像选择器样式 */
-.avatar-picker-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #323233;
-}
+.avatar-picker-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; font-size: 16px; font-weight: bold; color: #323233; }
 .close-btn { color: #969799; font-size: 20px; padding: 4px; }
 .avatar-grid { padding: 0 10px; }
-.preset-avatar-wrapper {
-  position: relative;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-}
-.preset-avatar-wrapper.is-active {
-  border-color: #ee0a24;
-  transform: scale(1.05);
-}
-.active-mask {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.preset-avatar-wrapper { position: relative; border-radius: 50%; border: 2px solid transparent; transition: all 0.2s; }
+.preset-avatar-wrapper.is-active { border-color: #ee0a24; transform: scale(1.05); }
+.active-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 </style>

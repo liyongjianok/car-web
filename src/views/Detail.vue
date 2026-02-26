@@ -51,7 +51,12 @@
 
     <van-action-bar>
       <van-action-bar-icon icon="chat-o" text="评论" @click="showReviews = true" />
-      <van-action-bar-icon icon="star-o" text="收藏" />
+      <van-action-bar-icon 
+        :icon="isFavorite ? 'star' : 'star-o'" 
+        :text="isFavorite ? '已收藏' : '收藏'" 
+        :color="isFavorite ? '#ff5000' : ''"
+        @click="toggleFavorite" 
+      />
       <van-action-bar-button type="warning" text="写评价" @click="onClickWrite" />
       <van-action-bar-button type="danger" text="立即订购" />
     </van-action-bar>
@@ -103,13 +108,19 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getCarDetail, getReviews, postReview } from '../api/car'
+import { useRoute, useRouter } from 'vue-router'
+// 引入收藏相关的 API
+import { getCarDetail, getReviews, postReview, getMyFavorites, addFavorite, removeFavorite } from '../api/car'
 import { showToast, showSuccessToast } from 'vant'
 
 const route = useRoute()
+const router = useRouter() // 引入 router 用于未登录跳转
 const detail = ref(null)
 const activeNames = ref(['基础参数', '安全配置'])
+
+// 鉴权与收藏逻辑
+const isLogin = ref(!!localStorage.getItem('car_token'))
+const isFavorite = ref(false)
 
 // 评论列表逻辑
 const showReviews = ref(false)
@@ -151,8 +162,9 @@ const onLoadReviews = async () => {
 }
 
 const onClickWrite = () => {
-  if (!localStorage.getItem('car_token')) {
+  if (!isLogin.value) {
     showToast('请先登录')
+    router.push('/login')
     return
   }
   showPost.value = true
@@ -171,7 +183,6 @@ const handlePost = async () => {
     })
     showSuccessToast('发布成功')
     showPost.value = false
-    // 重置评论列表并重新加载
     reviewList.value = []
     pageIndex.value = 1
     reviewFinished.value = false
@@ -183,9 +194,46 @@ const resetPost = () => {
   postData.value = { score: 5, content: '' }
 }
 
+// 检查收藏状态
+const checkFavoriteStatus = async () => {
+  if (!isLogin.value) return
+  try {
+    const res = await getMyFavorites({ pageIndex: 1, pageSize: 100 })
+    const found = res.list.find(item => item.modelId === Number(route.params.id))
+    if (found) {
+      isFavorite.value = true
+    }
+  } catch (err) {}
+}
+
+// 处理收藏点击
+const toggleFavorite = async () => {
+  if (!isLogin.value) {
+    showToast('请先登录')
+    router.push('/login')
+    return
+  }
+  
+  const modelId = Number(route.params.id)
+  try {
+    if (isFavorite.value) {
+      await removeFavorite({ modelId })
+      isFavorite.value = false
+      showSuccessToast('已取消收藏')
+    } else {
+      await addFavorite({ modelId })
+      isFavorite.value = true
+      showSuccessToast('收藏成功')
+    }
+  } catch (err) {
+    showToast('操作失败，请重试')
+  }
+}
+
 onMounted(() => {
   fetchDetail()
   onLoadReviews()
+  checkFavoriteStatus() // 进页面拉取状态
 })
 </script>
 
