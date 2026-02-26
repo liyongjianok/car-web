@@ -24,7 +24,7 @@
       </div>
 
       <van-cell-group inset class="menu-group">
-        <van-cell title="我的评论" icon="comment-o" is-link />
+        <van-cell title="我的评论" icon="comment-o" is-link to="/my-reviews" />
         <van-cell title="我的收藏" icon="star-o" is-link />
         <van-cell title="浏览历史" icon="clock-o" is-link />
       </van-cell-group>
@@ -115,13 +115,10 @@ const isLogin = ref(!!localStorage.getItem('car_token'))
 const userInfo = ref({})
 const defaultAvatar = 'https://dummyimage.com/100/ccc/fff&text=U'
 
-// 资料修改面板状态
 const showEdit = ref(false)
 const editData = ref({ nickname: '', avatar: '' })
-
-// 头像选择器状态及预设数据
 const showAvatarPicker = ref(false)
-// 使用 Vant 官方提供的一组稳定无版权的高清图作为默认头像
+
 const presetAvatars = [
   'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
   'https://fastly.jsdelivr.net/npm/@vant/assets/dog.jpeg',
@@ -158,10 +155,8 @@ const openEdit = () => {
   showEdit.value = true
 }
 
-// 选中预设头像
 const selectPresetAvatar = (url) => {
   editData.value.avatar = url
-  // 选完后自动关闭选择器，体验更丝滑
   showAvatarPicker.value = false
 }
 
@@ -220,8 +215,6 @@ onMounted(() => {
 }
 .close-btn { color: #969799; font-size: 20px; padding: 4px; }
 .avatar-grid { padding: 0 10px; }
-
-/* 头像项容器，增加选中状态的交互效果 */
 .preset-avatar-wrapper {
   position: relative;
   border-radius: 50%;
@@ -232,8 +225,6 @@ onMounted(() => {
   border-color: #ee0a24;
   transform: scale(1.05);
 }
-
-/* 选中时的半透明遮罩和勾号 */
 .active-mask {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;

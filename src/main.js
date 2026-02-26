@@ -1,23 +1,19 @@
 import { createApp } from 'vue'
-import './style.css'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
 
-// 引入 Vant 样式
+// 1. 全局引入 Vant 及样式，彻底解决重复注册的警告
+import Vant, { Lazyload } from 'vant'
 import 'vant/lib/index.css'
-import { Lazyload, Tabbar, TabbarItem, Search, NavBar, List, PullRefresh, Image as VanImage, Icon, Button, Form, Field, CellGroup, Cell, Swipe, SwipeItem, Divider, Collapse, CollapseItem, ActionBar, ActionBarIcon, ActionBarButton, Loading, BackTop, Popup } from 'vant'
-import Vant from 'vant'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+
+// 2. 一次性注册 Vant
 app.use(Vant)
-
-const components = [Tabbar, TabbarItem, Search, NavBar, List, PullRefresh, VanImage, Icon, Button, Form, Field, CellGroup, Cell, Swipe, SwipeItem, Divider, Collapse, CollapseItem, ActionBar, ActionBarIcon, ActionBarButton, Loading, BackTop, Popup]
-components.forEach(item => app.use(item))
-
 app.use(Lazyload, {
     lazyComponent: true,
 })

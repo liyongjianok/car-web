@@ -7,6 +7,8 @@ export const login = (data) => request.post('/user/login', data)
 export const getUserInfo = () => request.get('/user/info')
 // 更新个人资料接口
 export const updateUserInfo = (data) => request.post('/user/update', data)
+// 查询我的评论接口
+export const getMyReviews = (params) => request.get('/user/reviews', { params })
 
 // --- 车型相关接口 ---
 // 分页搜索车型列表
